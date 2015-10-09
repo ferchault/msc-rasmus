@@ -10,8 +10,8 @@ class HBondAnalysis:
         self.max_oo_dist = 0.0
         self.max_oho_angle = 0.0
         self.max_oh_dist = 0.0
-        self.hmat = self.abc_to_hmatrix(*self.u.dimensions)
-        self.hinv = np.linalg.inv(self.hmat)
+        self.hmat = np.zeros((3, 3))
+        self.hinv = np.zeros((3, 3))
         self.s_coords = np.zeros((self.u.atoms.n_atoms, 3))
         self.output_file = ''
         self.trajectory_name = trajectory_name
@@ -34,14 +34,15 @@ class HBondAnalysis:
                                                   'OH_distance_donor', 'OH_distance_acceptor',
                                                   'OO_distance', 'OHO_angle'])
 
-        for i in xrange(start_timestep, end_timestep):
+        for frame in self.u.trajectory[start_timestep:end_timestep]:
             self.h_bond_analysis_frame(oxygen_list, hydrogen_list, output_file)
-            self.u.trajectory.next()
 
         output_file.close()
 
     def h_bond_analysis_frame(self, oxygen_list, hydrogen_list, output_file):
-        
+
+        self.hmat = self.abc_to_hmatrix(*self.u.dimensions)
+        self.hinv = np.linalg.inv(self.hmat)
         self.calc_si_all(self.hinv)
         
         for i in xrange(oxygen_list.n_atoms):
@@ -61,12 +62,12 @@ class HBondAnalysis:
                                     donor = i_index
                                     acceptor = j_index
                                     donor_dist = dist_ih
-                                    acceptor_dist = dist_ih
+                                    acceptor_dist = dist_jh
                                 else:
                                     donor = j_index
                                     acceptor = i_index
-                                    acceptor_dist = dist_ih
                                     donor_dist = dist_jh
+                                    acceptor_dist = dist_ih
                                 self.write_line_to_file(output_file, [self.trajectory_name, self.u.trajectory.frame,
                                                          donor, acceptor, h_index, donor_dist, acceptor_dist,
                                                          dist_oo, angle_oho])
@@ -152,7 +153,7 @@ class HBondAnalysis:
         return [int(i) for i in water.indices]
 
 test = HBondAnalysis('../rasmus/input.psf', '../rasmus/IOHMD-A-prod.dcd', '../rasmus/input.ndx', 'A')
-test.set_parameters(3.2, 1.05, 145)
+test.set_parameters(4.0, 1.05, 145)
 
 oxygen_list = test.return_id_list_from_name("oxygen_A")
 oxygen_list += test.return_id_list_from_name("oxygen_G")
@@ -165,9 +166,9 @@ water_id_list = test.return_id_list_from_name("water")
 oxygen_list += test.get_water_oxygen(water_id_list)
 hydrogen_list += test.get_water_hydrogen(water_id_list)
 
-test.start_h_bond_analysis(oxygen_list, hydrogen_list, 0, test.u.trajectory.n_frames, 'run.out')
+test.start_h_bond_analysis(oxygen_list, hydrogen_list, 0, 4, 'run.out')
 
 test2 = HBondAnalysis('../rasmus/input.psf', '../rasmus/IOHMD-B-prod.dcd', '../rasmus/input.ndx', 'B')
-test2.set_parameters(3.0, 1.05, 145)
+test2.set_parameters(4.0, 1.05, 145)
 
-test2.start_h_bond_analysis(oxygen_list, hydrogen_list, 0, test2.u.trajectory.n_frames, 'run.out', True)
+#test2.start_h_bond_analysis(oxygen_list, hydrogen_list, 0, test.u.trajectory.n_frames, 'run.out', True)
