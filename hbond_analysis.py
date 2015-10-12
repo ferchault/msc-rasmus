@@ -44,7 +44,7 @@ class HBondAnalysis:
         self.hmat = self.abc_to_hmatrix(*self.u.dimensions)
         self.hinv = np.linalg.inv(self.hmat)
         self.calc_si_all(self.hinv)
-        
+
         for i in xrange(oxygen_list.n_atoms):
             i_index = oxygen_list.atoms.indices[i]
             for j in xrange(i+1, oxygen_list.n_atoms):
@@ -82,8 +82,8 @@ class HBondAnalysis:
 
         a = np.array((a, 0, 0))
         b = b * np.array((math.cos(gamma), math.sin(gamma), 0))
-        bracket = (math.cos(beta) - math.cos(beta) * math.cos(gamma)) / math.sin(gamma)
-        c = c * np.array((math.cos(alpha), bracket, math.sqrt(math.sin(beta) ** 2 - bracket ** 2)))
+        bracket = (math.cos(alpha) - math.cos(beta) * math.cos(gamma)) / math.sin(gamma)
+        c = c * np.array((math.cos(beta), bracket, math.sqrt(math.sin(beta) ** 2 - bracket ** 2)))
 
         result[:, 0] = a
         result[:, 1] = b
@@ -165,10 +165,9 @@ water_id_list = test.return_id_list_from_name("water")
 
 oxygen_list += test.get_water_oxygen(water_id_list)
 hydrogen_list += test.get_water_hydrogen(water_id_list)
-
-test.start_h_bond_analysis(oxygen_list, hydrogen_list, 0, 4, 'run.out')
+test.start_h_bond_analysis(oxygen_list, hydrogen_list, 0, test.u.trajectory.n_frames, 'run.out')
 
 test2 = HBondAnalysis('../rasmus/input.psf', '../rasmus/IOHMD-B-prod.dcd', '../rasmus/input.ndx', 'B')
 test2.set_parameters(4.0, 1.05, 145)
 
-#test2.start_h_bond_analysis(oxygen_list, hydrogen_list, 0, test.u.trajectory.n_frames, 'run.out', True)
+test2.start_h_bond_analysis(oxygen_list, hydrogen_list, 0, test2.u.trajectory.n_frames, 'run.out', True)
