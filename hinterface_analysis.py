@@ -2,7 +2,7 @@ __author__ = 'rasmus'
 from analysis.class_analysis import *
 import scipy, numpy as np
 
-analysis_obj = Analysis('../rasmus/input.psf', '../rasmus/IOHMD-A-prod.dcd', '../rasmus/input.ndx', 'A')
+analysis_obj = Analysis('../data/input.psf', '../data/IOHMD-A-prod.dcd', '../data/input.ndx', 'A')
 
 #form 3 by N of coordinates
 oxygen_list = analysis_obj.return_id_list_from_name("oxygen_A")

@@ -15,6 +15,7 @@ class Analysis:
         self.s_coords = np.zeros((len(self.u.atoms), 3))
         self.output_file = ''
         self.trajectory_name = trajectory_name
+        self.min_plane_dist = -10000.0
 
     def set_parameters(self, max_oo_dist, max_oh_dist, max_oho_angle):
         self.max_oh_dist = max_oh_dist
@@ -178,15 +179,18 @@ class Analysis:
         normal = np.linalg.svd(matrix)[0][:, -1]
 
         if plane == "b":
-            normal = -normal
+            if normal[2] > 0:
+                normal = -normal
+        elif plane == "t":
+            if normal[2] < 0:
+                normal = -normal
 
         for patom in point_atoms:
             plane_to_point = patom.position - center
             plane_to_point_dist = np.dot(normal, plane_to_point)
-
-            i_index = patom.id
-            self.write_line_to_file(output_file, [self.trajectory_name, self.u.trajectory.frame,
-                                                  plane, i_index, plane_to_point_dist])
+            if plane_to_point_dist >= self.min_plane_dist:
+                self.write_line_to_file(output_file, [self.trajectory_name, self.u.trajectory.frame,
+                                                      plane, patom.index, plane_to_point_dist])
 
         # for i in xrange(len(point_atoms)):
         #     plane_to_point = point_atoms.atoms.coordinates()[i] - center
@@ -196,5 +200,6 @@ class Analysis:
         #     self.write_line_to_file(output_file, [self.trajectory_name, self.u.trajectory.frame,
         #                                           plane, i_index, plane_to_point_dist])
 
-
+    def set_min_plane_dist(self, min_plane_dist):
+        self.min_plane_dist = min_plane_dist
 
