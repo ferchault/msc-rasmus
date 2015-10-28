@@ -3,12 +3,12 @@ __author__ = 'rasmus'
 from analysis.class_analysis import *
 from analysis.class_oxy_struck import *
 
-data_directory = "../data/"
+data_directory = "/home/rasmus/Dropbox/Education/UCL/fourth Year/Project/data/"
 bulk_oxygen_file = open(data_directory + "bulk_oxygen_5.out", 'r')
 hbond_file = open(data_directory + "rasmus-hbond-db.txt", 'r')
 
-analysis_obj_A = Analysis('../data/input.psf', '../data/IOHMD-A-prod.dcd', '../data/input.ndx', 'A')
-analysis_obj_B = Analysis('../data/input.psf', '../data/IOHMD-B-prod.dcd', '../data/input.ndx', 'B')
+analysis_obj_A = Analysis(data_directory +'input.psf', data_directory +'IOHMD-A-prod.dcd', data_directory +'input.ndx', 'A')
+analysis_obj_B = Analysis(data_directory +'input.psf', data_directory +'IOHMD-B-prod.dcd', data_directory +'input.ndx', 'B')
 
 n_frames_A = analysis_obj_A.u.trajectory.n_frames
 n_frames_B = analysis_obj_B.u.trajectory.n_frames
@@ -23,14 +23,17 @@ hbond_file.next()
 oxygen_bulk_unique_A = set()
 oxygen_bulk_unique_B = set()
 
-oxygen_bulk_A = []
-oxygen_bulk_B = []
+oxygen_bulk_A = [[] for i in range(n_frames_A)]
+oxygen_bulk_B = [[] for i in range(n_frames_B)]
+
 for line in bulk_oxygen_file:
-    frame = line.split()[1]
-    oxy_id = line.split()[3]
+    frame = int(line.split()[1])
+    oxy_id = int(line.split()[3])
     if line.split()[0] == 'A':
+        oxygen_bulk_A[frame].append(oxy_id)
         oxygen_bulk_unique_A.add(int(line.split()[3]))
     elif line.split()[0] == 'B':
+        oxygen_bulk_B[frame].append(oxy_id)
         oxygen_bulk_unique_B.add(int(line.split()[3]))
 
 #form data structure

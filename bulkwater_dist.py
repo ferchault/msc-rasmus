@@ -2,8 +2,9 @@
 __author__ = 'rasmus'
 from analysis.class_analysis import *
 
-analysis_obj_A = Analysis('../data/input.psf', '../data/IOHMD-A-prod.dcd', '../data/input.ndx', 'A')
-analysis_obj_B = Analysis('../data/input.psf', '../data/IOHMD-B-prod.dcd', '../data/input.ndx', 'B')
+data_directory = "/home/rasmus/Dropbox/Education/UCL/fourth Year/Project/data/"
+analysis_obj_A = Analysis(data_directory +'input.psf', data_directory +'IOHMD-A-prod.dcd', data_directory +'input.ndx', 'A')
+analysis_obj_B = Analysis(data_directory +'input.psf', data_directory +'IOHMD-B-prod.dcd', data_directory +'input.ndx', 'B')
 
 oxygen_list_A = analysis_obj_A.return_id_list_from_name("oxygen_A")
 oxygen_list_G = analysis_obj_A.return_id_list_from_name("oxygen_G")
