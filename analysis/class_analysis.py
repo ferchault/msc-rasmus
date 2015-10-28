@@ -12,7 +12,7 @@ class Analysis:
         self.max_oh_dist = 0.0
         self.hmat = np.zeros((3, 3))
         self.hinv = np.zeros((3, 3))
-        self.s_coords = np.zeros((self.u.atoms.n_atoms, 3))
+        self.s_coords = np.zeros((len(self.u.atoms), 3))
         self.output_file = ''
         self.trajectory_name = trajectory_name
 
@@ -161,10 +161,8 @@ class Analysis:
             output_file = open(output_file_path, 'a')
         else:
             output_file = open(output_file_path, 'w')
-            self.write_line_to_file(output_file, ['trajectory', 'frame', 'donor_oxygen_index',
-                                                 'acceptor_oxygen_index', 'hydrogen_index',
-                                                 'OH_distance_donor', 'OH_distance_acceptor',
-                                                 'OO_distance', 'OHO_angle'])
+            self.write_line_to_file(output_file, ['trajectory', 'frame', 'topbottom', 'hydrogen_index',
+                                                 'OH_plane_distance', ])
 
         for frame in self.u.trajectory[start_timestep:end_timestep]:
             self.interface_h_analysis_frame(plane_atoms, point_atoms, plane, output_file)
@@ -182,13 +180,21 @@ class Analysis:
         if plane == "b":
             normal = -normal
 
-        for i in xrange(point_atoms.n_atoms):
-            plane_to_point = point_atoms.atoms.coordinates()[i] - center
+        for patom in point_atoms:
+            plane_to_point = patom.position - center
             plane_to_point_dist = np.dot(normal, plane_to_point)
 
-            i_index = point_atoms.atoms.indices[i]
+            i_index = patom.id
             self.write_line_to_file(output_file, [self.trajectory_name, self.u.trajectory.frame,
                                                   plane, i_index, plane_to_point_dist])
+
+        # for i in xrange(len(point_atoms)):
+        #     plane_to_point = point_atoms.atoms.coordinates()[i] - center
+        #     plane_to_point_dist = np.dot(normal, plane_to_point)
+
+        #     i_index = point_atoms.atoms.indices[i]
+        #     self.write_line_to_file(output_file, [self.trajectory_name, self.u.trajectory.frame,
+        #                                           plane, i_index, plane_to_point_dist])
 
 
 
