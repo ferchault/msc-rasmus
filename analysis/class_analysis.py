@@ -1,14 +1,14 @@
 import MDAnalysis
 import numpy as np
 import math
-
+from analysis.class_oxy_struck import *
 
 class Analysis:
     def __init__(self, psf_path, dcd_path, ndx_path, trajectory_name):
         self.u = MDAnalysis.Universe(psf_path, dcd_path)
         self.ndx = self.ndx_file_read_to_list(ndx_path)
         self.max_oo_dist = 0.0
-        self.max_oho_angle = 0.0
+        self.min_oho_angle = 0.0
         self.max_oh_dist = 0.0
         self.hmat = np.zeros((3, 3))
         self.hinv = np.zeros((3, 3))
@@ -17,10 +17,14 @@ class Analysis:
         self.trajectory_name = trajectory_name
         self.min_plane_dist = -10000.0
 
-    def set_parameters(self, max_oo_dist, max_oh_dist, max_oho_angle):
+    def set_parameters(self, max_oo_dist, max_oh_dist, min_oho_angle):
         self.max_oh_dist = max_oh_dist
         self.max_oo_dist = max_oo_dist
-        self.max_oho_angle = max_oho_angle
+        self.min_oho_angle = min_oho_angle
+
+    def set_parameters(self, max_oo_dist, min_oho_angle):
+        self.max_oo_dist = max_oo_dist
+        self.min_oho_angle = min_oho_angle
 
     def start_h_bond_analysis(self, oxygen_list_name, hydrogen_list_name, start_timestep, end_timestep, output_file_path, append=False):
         hydrogen_list = self.u.atoms[hydrogen_list_name]
@@ -55,7 +59,7 @@ class Analysis:
                     for h in xrange(hydrogen_list.n_atoms):
                         h_index = hydrogen_list.atoms.indices[h]
                         angle_oho = self.calc_angle(i_index, h_index, j_index)
-                        if angle_oho >= self.max_oho_angle:
+                        if angle_oho >= self.min_oho_angle:
                             dist_ih = self.calc_dist(i_index, h_index)
                             dist_jh = self.calc_dist(j_index, h_index)
                             if dist_ih <= self.max_oh_dist or dist_jh <= self.max_oh_dist:
@@ -203,3 +207,102 @@ class Analysis:
     def set_min_plane_dist(self, min_plane_dist):
         self.min_plane_dist = min_plane_dist
 
+    def hbond_bulkwater_analysis_build_structure(self, bulk_water_path, hbond_path):
+        bulk_oxygen_file = open(bulk_water_path, 'r')
+        hbond_file = open(hbond_path, 'r')
+
+        bulk_oxygen_file.next()
+        hbond_file.next()
+
+        n_frames = self.u.trajectory.n_frames
+
+        oxygen_bulk_unique = set()
+
+        oxygen_bulk = [[] for i in range(n_frames)]
+
+        for line in bulk_oxygen_file:
+            frame = int(line.split()[1])
+            oxy_id = int(line.split()[3])
+            if line.split()[0] == self.trajectory_name:
+                oxygen_bulk[frame].append(oxy_id)
+                oxygen_bulk_unique.add(int(line.split()[3]))
+
+        trajectory = {}
+
+        for oxy_id in oxygen_bulk_unique:
+            array = []
+            for i in xrange(n_frames):
+                array.append(OxyStruck(oxy_id, i))
+            trajectory[oxy_id] = array
+
+        for line in hbond_file:
+            line_parts = line.split()
+            traj_name = line_parts[0]
+            frame = int(line_parts[1])
+            donor_id = int(line_parts[2])
+            hyd_id = int(line_parts[4])
+            acceptor_id = int(line_parts[3])
+            oo_dist = float(line_parts[7])
+            oho_angle = float(line_parts[8])
+
+            if traj_name == self.trajectory_name:
+                if donor_id in oxygen_bulk[frame]:
+                    trajectory[donor_id][frame].in_bulk = True
+                    if oo_dist <= self.max_oo_dist and oho_angle >= self.min_oho_angle:
+                        trajectory[donor_id][frame].has_hbond = True
+                        trajectory[donor_id][frame].Hbonds.append(Hbond(donor_id, acceptor_id, hyd_id))
+        bulk_oxygen_file.close()
+        hbond_file.close()
+
+        return trajectory, oxygen_bulk
+
+    def hbond_bulkwater_analysis_simple(self, trajectory, oxygen_bulk):
+
+        number_hb = 0
+        number_hb_break = 0
+        number_oxygen_bulk = 0
+        n_frames = self.u.trajectory.n_frames
+
+        for frame in oxygen_bulk:
+            number_oxygen_bulk += len(frame)
+
+        for donor in trajectory.itervalues():
+            for c_frame in donor:
+                if c_frame.in_bulk and c_frame.has_hbond:
+                    number_hb += len(c_frame.Hbonds)
+                    for hb in c_frame.Hbonds:
+                        if c_frame.frame+1 < n_frames:
+                            if hb not in donor[c_frame.frame+1].Hbonds:
+                                number_hb_break += 1
+
+        print number_hb
+        print number_oxygen_bulk
+        print number_hb_break
+
+        avg_hb = float(number_hb) / float(number_oxygen_bulk)
+
+        avg_lt = (avg_hb * (number_oxygen_bulk/n_frames) * (n_frames*0.5)) / (float(number_hb_break))
+
+        print avg_hb
+        print avg_lt
+
+    def hbond_bulkwater_analysis_population(self, trajectory, oxygen_bulk, delta):
+        n_frames = self.u.trajectory.n_frames
+
+        hbond_list = []
+        for donor in trajectory.itervalues():
+            for frame in donor[delta: n_frames - delta]:
+                if frame.in_bulk and frame.has_hbond:
+                    for hb in frame.Hbonds:
+                        found = False
+                        for hb_list in hbond_list:
+                            if hb == hb_list.hbond:
+                                hb_list.framelist.append(frame.frame)
+                                found = True
+                        if not found:
+                            hbond_list.append(HbondStrcture(hb, frame.frame))
+
+        for hbond_list:
+            hbond_list[] = np.array(hb.framelist)
+
+        print hbond_list
