@@ -18,3 +18,8 @@ class HbondStruck:
         self.donor = donor
         self.acceptor = acceptor
         self.hydrogen = hydrogen
+
+    def __repr__(self):
+        return str('d' + str(self.donor) + 'a' + str(self.acceptor) + 'h' + str(self.hydrogen))
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
