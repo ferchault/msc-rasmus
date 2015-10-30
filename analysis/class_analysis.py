@@ -1,6 +1,7 @@
 import MDAnalysis
 import numpy as np
 import math
+
 from analysis.class_oxy_struck import *
 
 class Analysis:
@@ -301,8 +302,25 @@ class Analysis:
                                 found = True
                         if not found:
                             hbond_list.append(HbondStrcture(hb, frame.frame))
+        unique_hb = []
+        for hb in hbond_list:
+            hb.framelist = np.array(hb.framelist)
+            parts = self.split_array_by_delta(hb.framelist, delta)
+            unique_hb.append(parts)
 
-        for hbond_list:
-            hbond_list[] = np.array(hb.framelist)
+        lifetimes = []
+        for outer_array in unique_hb:
+            for inner_array in outer_array:
+                lifetimes.append(inner_array[-1] - inner_array[0])
 
-        print hbond_list
+        lifetimes.sort()
+        lifetimes = np.array(lifetimes)
+        mean = np.mean(lifetimes)*0.5
+        return lifetimes, mean
+
+    #Splits array by delta - designed by Guido
+    @staticmethod
+    def split_array_by_delta(array, delta):
+        steps = array[1:] - array[:-1]
+        seperators = np.where(steps > delta)
+        return np.split(array, seperators[0]+1)
