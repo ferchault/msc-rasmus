@@ -290,18 +290,37 @@ class Analysis:
     def hbond_bulkwater_analysis_population(self, trajectory, oxygen_bulk, delta):
         n_frames = self.u.trajectory.n_frames
 
+        number_oxygen_bulk = 0
+        number_hb = 0
+
+        for frame in oxygen_bulk[delta: n_frames - delta]:
+            number_oxygen_bulk += len(frame)
+
         hbond_list = []
+        number_bulk = 0
         for donor in trajectory.itervalues():
             for frame in donor[delta: n_frames - delta]:
-                if frame.in_bulk and frame.has_hbond:
-                    for hb in frame.Hbonds:
-                        found = False
-                        for hb_list in hbond_list:
-                            if hb == hb_list.hbond:
-                                hb_list.framelist.append(frame.frame)
-                                found = True
-                        if not found:
-                            hbond_list.append(HbondStrcture(hb, frame.frame))
+                if frame.in_bulk:
+                    number_bulk += 1
+                    if frame.has_hbond:
+                        number_hb += len(frame.Hbonds)
+                        for hb in frame.Hbonds:
+                            found = False
+                            for hb_list in hbond_list:
+                                if hb == hb_list.hbond:
+                                    hb_list.framelist.append(frame.frame)
+                                    found = True
+                            if not found:
+                                hbond_list.append(HbondStrcture(hb, frame.frame))
+        count = 0
+        #Uses to much memory... Uses all memory which makes computer crash
+        # for hb in hbond_list:
+        #     for frame in hb.framelist:
+        #         for i in xrange(frame-delta, frame+delta):
+        #             hb.framelist.append(i)
+        #     hb.framelist = set(hb.framelist)
+        #     count += len(hb.framelist)
+
         unique_hb = []
         for hb in hbond_list:
             hb.framelist = np.array(hb.framelist)
@@ -312,11 +331,15 @@ class Analysis:
         for outer_array in unique_hb:
             for inner_array in outer_array:
                 lifetimes.append(inner_array[-1] - inner_array[0])
+                count += inner_array[-1] - inner_array[0]
 
         lifetimes.sort()
         lifetimes = np.array(lifetimes)
         mean = np.mean(lifetimes)*0.5
-        return lifetimes, mean
+
+        # avg_hb = float(number_hb) / float(number_bulk)
+        avg_hb = float(count) / float(number_oxygen_bulk)
+        return lifetimes, mean, avg_hb
 
     #Splits array by delta - designed by Guido
     @staticmethod
@@ -324,3 +347,12 @@ class Analysis:
         steps = array[1:] - array[:-1]
         seperators = np.where(steps > delta)
         return np.split(array, seperators[0]+1)
+
+
+    def hbond_bulkwater_analysis_specific_oxygen(self, trajectory, oxygen_bulk , oxygen_id):
+        count = 0
+        for frame in trajectory[oxygen_id]:
+            if frame.in_bulk and frame.has_hbond:
+                count += len(frame.Hbonds)
+
+        print float(count)/float(len(trajectory[oxygen_id]))
