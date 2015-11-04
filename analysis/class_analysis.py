@@ -336,10 +336,11 @@ class Analysis:
         lifetimes.sort()
         lifetimes = np.array(lifetimes)
         mean = np.mean(lifetimes)*0.5
+        std = np.std(lifetimes)*0.5
 
         # avg_hb = float(number_hb) / float(number_bulk)
         avg_hb = float(count) / float(number_oxygen_bulk)
-        return lifetimes, mean, avg_hb
+        return lifetimes, mean, std, avg_hb
 
     #Splits array by delta - designed by Guido
     @staticmethod
