@@ -102,6 +102,10 @@ class Analysis:
         for i in xrange(self.u.atoms.n_atoms):
             self.s_coords[i] = np.dot(hinv, self.u.atoms.coordinates()[i])
 
+    def calc_si_specific(self, hinv, atomlist):
+        for atom in atomlist:
+            self.s_coords[atom] = np.dot(hinv, self.u.atoms.coordinates()[atom])
+
     # Calculate inter atom distance
     def calc_dist(self, i, j):
         s_ij = self.s_coords[i] - self.s_coords[j]
@@ -208,7 +212,7 @@ class Analysis:
     def set_min_plane_dist(self, min_plane_dist):
         self.min_plane_dist = min_plane_dist
 
-    def hbond_bulkwater_analysis_build_structure(self, bulk_water_path, hbond_path):
+    def hbond_bulkwater_analysis_build_structure_bulkwater(self, bulk_water_path, hbond_path):
         bulk_oxygen_file = open(bulk_water_path, 'r')
         hbond_file = open(hbond_path, 'r')
 
@@ -257,6 +261,38 @@ class Analysis:
 
         return trajectory, oxygen_bulk
 
+    def hbond_analysis_build_structure(self, hbond_path, oxygen_list):
+        hbond_file = open(hbond_path, 'r')
+        hbond_file.next()
+        #Creates hb_structure to size with total number of oxygens in trajectory
+        hb_structure_db = {}
+        n_frames = self.u.trajectory.n_frames
+
+        for donor in oxygen_list:
+            array = []
+            for i in xrange(n_frames):
+                array.append(OxyStruck(donor, i))
+            hb_structure_db[donor] = array
+
+        #Reads the hbond data base file
+        for line in hbond_file:
+                    line_parts = line.split()
+                    traj_name = line_parts[0]
+                    frame = int(line_parts[1])
+                    donor_id = int(line_parts[2])
+                    hyd_id = int(line_parts[4])
+                    acceptor_id = int(line_parts[3])
+                    oo_dist = float(line_parts[7])
+                    oho_angle = float(line_parts[8])
+
+                    if traj_name == self.trajectory_name:
+                            if oo_dist <= self.max_oo_dist and oho_angle >= self.min_oho_angle:
+                                hb_structure_db[donor_id][frame].has_hbond = True
+                                hb_structure_db[donor_id][frame].Hbonds.append(Hbond(donor_id, acceptor_id, hyd_id))
+
+        hbond_file.close()
+        return hb_structure_db
+
     def hbond_bulkwater_analysis_simple(self, trajectory, oxygen_bulk):
 
         number_hb = 0
@@ -286,7 +322,7 @@ class Analysis:
 
         print avg_hb
         print avg_lt
-
+#returns the hbond lifetime population with filled hbond gaps up to delta
     def hbond_bulkwater_analysis_population(self, trajectory, oxygen_bulk, delta):
         n_frames = self.u.trajectory.n_frames
 
@@ -342,13 +378,38 @@ class Analysis:
         avg_hb = float(count) / float(number_oxygen_bulk)
         return lifetimes, mean, std, avg_hb
 
+    def hbond_get_filled_hbond(self, hbond_structure, delta):
+        n_frames = self.u.trajectory.n_frames
+
+        hbond_list = []
+        for donor in hbond_structure.itervalues():
+            for frame in donor:
+                if frame.has_hbond:
+                    for hb in frame.Hbonds:
+                        found = False
+                        for hb_list in hbond_list:
+                            if hb == hb_list.hbond:
+                                hb_list.framelist.append(frame.frame)
+                                found = True
+                        if not found:
+                            hbond_list.append(HbondStrcture(hb, frame.frame))
+        unique_hb = []
+        for hb in hbond_list:
+            hb.framelist = np.array(hb.framelist)
+            parts = self.split_array_by_delta(hb.framelist, delta)
+            for filled_hb in parts:
+                hb_struck = HbondStrcture(hb.hbond,0)
+                hb_struck.framelist = filled_hb
+                unique_hb.append(hb_struck)
+
+        return unique_hb
+
     #Splits array by delta - designed by Guido
     @staticmethod
     def split_array_by_delta(array, delta):
         steps = array[1:] - array[:-1]
         seperators = np.where(steps > delta)
         return np.split(array, seperators[0]+1)
-
 
     def hbond_bulkwater_analysis_specific_oxygen(self, trajectory, oxygen_bulk , oxygen_id):
         count = 0
@@ -357,3 +418,34 @@ class Analysis:
                 count += len(frame.Hbonds)
 
         print float(count)/float(len(trajectory[oxygen_id]))
+
+    def hbond_analysis_write_filled_hbond(self, hb_db, output_file_path, append=False):
+        if append:
+            output_file = open(output_file_path, 'a')
+        else:
+            output_file = open(output_file_path, 'w')
+            self.write_line_to_file(output_file, ['trajectory', 'frame', 'donor_oxygen_index',
+                                                  'acceptor_oxygen_index', 'hydrogen_index',
+                                                  'OH_distance_donor', 'OH_distance_acceptor',
+                                                  'OO_distance', 'OHO_angle'])
+
+
+        #
+        for hb in hb_db:
+            donor = hb.hbond.donor
+            acceptor = hb.hbond.acceptor
+            hydrogen = hb.hbond.hydrogen
+            atom_id_list = [donor, acceptor, hydrogen]
+            for frame in xrange(hb.framelist[0], hb.framelist[-1]+1):
+                for md_frame in self.u.trajectory[frame:frame+1]:
+                    self.hmat = self.abc_to_hmatrix(*self.u.dimensions)
+                    self.hinv = np.linalg.inv(self.hmat)
+                    self.calc_si_specific(self.hinv, atom_id_list)
+
+                    ad_dist = self.calc_dist(acceptor, donor)
+                    ah_dist = self.calc_dist(acceptor, hydrogen)
+                    dh_dist = self.calc_dist(donor, hydrogen)
+                    ahd_angle = self.calc_angle(acceptor, hydrogen, donor)
+
+                    self.write_line_to_file(output_file, [self.trajectory_name, frame, donor, acceptor, hydrogen, dh_dist, ah_dist, ad_dist , ahd_angle])
+        output_file.close()
