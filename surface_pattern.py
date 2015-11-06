@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import numpy as np
 
+data_directory = "/home/rasmus/Dropbox/Education/UCL/fourth Year/Project/data/"
+
 # read hinterface files
-hinterface_file = '/Volumes/ALFA/IOHMD-A-prod-22ce9a183b38cedfca608118c1fc99f9/msc-copy/total.txt'
+hinterface_file = data_directory + "hplanedist.out"
 first = True
 
 hinterface_data = dict()
@@ -57,9 +59,9 @@ def build_key(a, b, c, d):
 		res += reduce(lambda x, y: x+y, map(str, _))
 	return res
 
-for traj, maxframe in zip('A B'.split(), (4422, 4289)):
+for traj, maxframe in zip('A B'.split(), (4421, 4288)):
 	for surface in 't b'.split():
-		for frame in range(1, maxframe):
+		for frame in range(0, maxframe):
 			try:
 				abcd = map(lambda x: [hinterface_data[traj][surface][frame][_] for _ in x], hs[surface])
 			except:
@@ -80,4 +82,16 @@ for traj, maxframe in zip('A B'.split(), (4422, 4289)):
 			else:
 				found_patterns[found] += 1
 
-print found_patterns
+#Read the hb database
+hb_data_file = open(data_directory + "filled_hb_db.out")
+first = True
+for line in hb_data_file:
+    if first:
+        first = False
+        continue
+    parts = line.strip().split()
+    traj = parts[0]
+    frame = int(parts[1])
+    donor = int(parts[2])
+    acceptor = int(parts[3])
+    hydrogen = int(parts[4])
