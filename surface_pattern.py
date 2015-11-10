@@ -82,6 +82,21 @@ for traj, maxframe in zip('A B'.split(), (4421, 4288)):
 			else:
 				found_patterns[found] += 1
 
+# 110 100 100 100 sequence pattern for 1426 times
+
+#Build neighbour list
+nb_list = np.zeros((12,12))
+
+nb_list[:,0] = [0 , 1, 1 , 0 , 1 , 1 , 0 ,0 ,1 ,0 ,1 , 0]
+nb_list[:,1] = [1 , 0, 1 , 1 , 0 , 0 , 0 ,0 ,1 ,1 ,0 , 1]
+nb_list[:,2] = [1 , 1, 0 , 1 , 0 , 0 , 1 ,1 ,0 ,0 ,1 , 0]
+
+for j in range(0,3):
+	a, b ,c ,d = [list(nb_list[i:i+3,j]) for i in xrange(0, len(nb_list), 3)]
+	nb_list[:,j+3] = b + a + d + c
+	nb_list[:,j+6] = c + d + a + b
+	nb_list[:,j+9] = d + c + b + a
+
 #Read the hb database
 hb_data_file = open(data_directory + "filled_hb_db.out")
 first = True
