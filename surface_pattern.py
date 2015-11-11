@@ -154,17 +154,17 @@ for x in sequence_array:
 		donor_matrix[key] = dict()
 
 	if frame not in donor_matrix[key]:
-		donor_matrix[key][frame] = matrix_d_in
+		donor_matrix[key][frame] = np.zeros((12,6))
 
 	if key not in donor_out_matrix:
 		donor_out_matrix[key] = dict()
 	if frame not in donor_out_matrix[key]:
-		donor_out_matrix[key][frame] = matrix_d_out
+		donor_out_matrix[key][frame] = np.zeros((12,1))
 
 	if key not in acceptor_matrix:
 		acceptor_matrix[key] = dict()
 	if frame not in acceptor_matrix[key]:
-		acceptor_matrix[key][frame] = matrix_a
+		acceptor_matrix[key][frame] = np.zeros((12,2))
 
 	for i in xrange(len(id_list)):
 		id = id_list[i]
@@ -187,5 +187,8 @@ for x in sequence_array:
 					for nb_index in xrange(len(masked)):
 						if masked[nb_index] == acceptor:
 							donor_matrix[key][frame][i][nb_index] += 1
+
+print found_patterns
+print donor_out_matrix['110100100100']
 
 print time.time() - start
