@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 import numpy as np
+import numpy.ma as ma
 
+import time
+
+start = time.time()
 data_directory = "/home/rasmus/Dropbox/Education/UCL/fourth Year/Project/data/"
 
 # read hinterface files
@@ -41,7 +45,8 @@ for line in open(hinterface_file):
 oxygen_idx_top = ((80, 74, 77), (146, 140, 143), (47, 41, 44), (113, 107, 110))
 oxygen_idx_bot = ((59, 57, 58), (125, 123, 124), (26, 24, 25), (92, 90, 91))
 
-lookup = dict(((92,8), (26,2), (93,9), (91,7), (27,3), (125,11), (25,1), (59,5), (126,12), (124,10), (58,4), (60,6), (81,18), (111,20), (45,14), (48,15), (42,13), (114,21), (108,19), (78,17), (75,16), (147,24), (144,23), (141,22)))
+lookup = dict(((92,8), (26,2), (93,9), (91,7), (27,3), (125,11), (25,1), (59,5), (126,12), (124,10), (58,4), (60,6), (81,18), (111,20), (45,14), (48,15), (42,13),
+			   (114,21), (108,19), (78,17), (75,16), (147,24), (144,23), (141,22)))
 hydrogen_idx_top = [[lookup[_+1]-1 for _ in x] for x in oxygen_idx_top]
 hydrogen_idx_bot = [[lookup[_+1]-1 for _ in x] for x in oxygen_idx_bot]
 
@@ -59,6 +64,7 @@ def build_key(a, b, c, d):
 		res += reduce(lambda x, y: x+y, map(str, _))
 	return res
 
+sequence_array = []
 for traj, maxframe in zip('A B'.split(), (4421, 4288)):
 	for surface in 't b'.split():
 		for frame in range(0, maxframe):
@@ -76,6 +82,13 @@ for traj, maxframe in zip('A B'.split(), (4421, 4288)):
 			for x in (key1, key2, key3, key4):
 				if x in found_patterns:
 					found = x
+					oxylist = ()
+					if surface == 't':
+						oxylist= sum(oxygen_idx_top, ())
+					elif surface == 'b':
+						oxylist= sum(oxygen_idx_bot, ())
+
+					sequence_array.append((traj, frame, surface, str(key1), oxylist))
 					break
 			if found is None:
 				found_patterns[key1] = 1
@@ -97,16 +110,82 @@ for j in range(0,3):
 	nb_list[:,j+6] = c + d + a + b
 	nb_list[:,j+9] = d + c + b + a
 
+#
 #Read the hb database
 hb_data_file = open(data_directory + "filled_hb_db.out")
 first = True
+hb_db = dict()
 for line in hb_data_file:
-    if first:
-        first = False
-        continue
-    parts = line.strip().split()
-    traj = parts[0]
-    frame = int(parts[1])
-    donor = int(parts[2])
-    acceptor = int(parts[3])
-    hydrogen = int(parts[4])
+	if first:
+		first = False
+		continue
+	parts = line.strip().split()
+	traj = parts[0]
+	frame = int(parts[1])
+	donor = int(parts[2])
+	acceptor = int(parts[3])
+	hydrogen = int(parts[4])
+
+	if traj not in hb_db:
+		hb_db[traj] = dict()
+	if frame not in hb_db[traj]:
+		hb_db[traj][frame] = dict()
+	if donor not in hb_db[traj][frame]:
+		hb_db[traj][frame][donor] = dict()
+	if acceptor not in hb_db[traj][frame][donor]:
+		hb_db[traj][frame][donor][acceptor] = list()
+	hb_db[traj][frame][donor][acceptor].append(hydrogen)
+
+acceptor_matrix = dict()
+donor_matrix = dict()
+donor_out_matrix = dict()
+
+matrix_a = np.zeros((12,2))
+matrix_d_out = np.zeros((12,1))
+matrix_d_in = np.zeros((12,6))
+
+for x in sequence_array:
+	tray = x[0]
+	frame = x[1]
+	key = x[3]
+	id_list = x[4]
+
+	if key not in donor_matrix:
+		donor_matrix[key] = dict()
+
+	if frame not in donor_matrix[key]:
+		donor_matrix[key][frame] = matrix_d_in
+
+	if key not in donor_out_matrix:
+		donor_out_matrix[key] = dict()
+	if frame not in donor_out_matrix[key]:
+		donor_out_matrix[key][frame] = matrix_d_out
+
+	if key not in acceptor_matrix:
+		acceptor_matrix[key] = dict()
+	if frame not in acceptor_matrix[key]:
+		acceptor_matrix[key][frame] = matrix_a
+
+	for i in xrange(len(id_list)):
+		id = id_list[i]
+		donors = hb_db[tray][frame].keys()
+		for donor in donors:
+			acceptors = hb_db[tray][frame][donor].keys()
+			for acceptor in acceptors:
+				#acceptor being donated to onto interface
+				if acceptor == id and donor not in id_list:
+					acceptor_matrix[key][frame][i][0] += 1
+				#Acceptor being donated to from interface
+				elif acceptor == id and donor in id_list:
+					acceptor_matrix[key][frame][i][1] += 1
+
+				if donor == id and acceptor not in id_list:
+					donor_out_matrix[key][frame][i][0] += 1
+
+				elif donor == id and acceptor in id_list:
+					masked = np.ma.array(id_list, mask = nb_list[:,i]-1).compressed()
+					for nb_index in xrange(len(masked)):
+						if masked[nb_index] == acceptor:
+							donor_matrix[key][frame][i][nb_index] += 1
+
+print time.time() - start
