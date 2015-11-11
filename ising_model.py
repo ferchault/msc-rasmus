@@ -148,12 +148,25 @@ patterns = {
 	'011010101101': 16, '110110100100': 204, '110100110110': 2282, '110010101100': 106, '110100111100': 120,
 	'011011101101': 19, '011011101100': 4, '110100101110': 27}
 
+hematitematches = []
 # start estimation
 ie = IsingEstimator(nb_list)
 for pattern, count in patterns.iteritems():
+	# build equivalent patterns
+	a, b, c, d = map(''.join, zip(*[iter(pattern)]*3))
+	p1 = ''.join((a, b, c, d))
+	assert(p1 == pattern)
+	p2 = ''.join((d, c, b, a))
+	p3 = ''.join((b, a, d, c))
+	p4 = ''.join((c, d, a, b))
+	ps = set((p1, p2, p3, p4))
+	for elem in ps:
+		hematitematches.append(elem)
+
 	# convert from visual to Ising representation
-	pattern = map(lambda _: 1 if _ == '1' else -1, pattern)
-	ie.feed_pattern(pattern, count)
+	for elem in ps:
+		elem = map(lambda _: 1 if _ == '1' else -1, elem)
+		ie.feed_pattern(elem, max(1, int(count/float(len(ps)))))
 
 ie.update_cache()
 #print sco.minimize(ie.optimize_loglikelihood, (1., 2.), jac=ie.optimize_gradloglikelihood)
@@ -185,7 +198,7 @@ print '  pattern, freq, log(probability)'
 lgps = ie.logprobabilities(alpha, beta)
 pentries = ie._patterns
 pfreq = ie._frequencies
-for p, freq, ps in zip(pentries, pfreq, lgps):
+for p, freq, ps in sorted(zip(pentries, pfreq, lgps), key=lambda x: x[1], reverse=True):
 	strpattern = ''.join(map(lambda _: str(_), np.maximum(p, 0)))
 	print strpattern, freq, ps
 
@@ -213,7 +226,12 @@ print 'unique pattern count', len(fullpatternlist)
 lgps = ie.logprobabilities(alpha, beta)
 assert(len(lgps) == len(fullpatternlist))
 
+#import matplotlib.pyplot as plt
+#plt.plot(range(len(lgps)), sorted(lgps))
+#plt.show()
+
+#print hematitematches
 ordered = sorted(zip(lgps, fullpatternlist), key=lambda x: x[0], reverse=True)[:50]
-print 'best probability', max(lgps)
+print 'best/worst probability', max(lgps), min(lgps)
 for ps, pattern in ordered:
-	print pattern, ps
+	print pattern, ps, pattern in hematitematches
