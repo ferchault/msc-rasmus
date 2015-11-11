@@ -37,6 +37,11 @@ class IsingEstimator(object):
 		self._build_global_cache()
 		self._frequencies = np.array(self._frequencies)
 
+	def clear(self):
+		self._patterns = []
+		self._cached = False
+		self._frequencies = []
+
 	def _calc_A_from_pattern(self, pattern):
 		A = 0
 		for site in range(self._site_count):
@@ -162,11 +167,53 @@ for i in range(1000):
 	steplength = 0.000001
 	nextval = ie.loglikelihood(alpha+curgrad[0]*steplength, beta+curgrad[1]*steplength)
 	diff = curval-nextval
-	print diff, curgrad
+	#print diff, curgrad
 	alpha+=curgrad[0]*steplength
 	beta+=curgrad[1]*steplength
 	alpha = abs(alpha)
 	beta = abs(beta)
 	if diff > -0.002:
 		steplength /= 10
-print alpha, beta
+
+print 'Optimal Parameters'
+print 'alpha', alpha, 'beta', beta
+
+print
+
+print 'probabilities and frequencies for observed patterns'
+print '  pattern, freq, log(probability)'
+lgps = ie.logprobabilities(alpha, beta)
+pentries = ie._patterns
+pfreq = ie._frequencies
+for p, freq, ps in zip(pentries, pfreq, lgps):
+	strpattern = ''.join(map(lambda _: str(_), np.maximum(p, 0)))
+	print strpattern, freq, ps
+
+
+print '50 most probable configurations (roughly top 1%)'
+z = ie._calc_z(alpha, beta)
+ie.clear()
+fullpatternlist = []
+for pattern in it.product((-1, 1), repeat=12):
+	strpattern = ''.join(map(lambda _: str(_), np.maximum(pattern, 0)))
+	a, b, c, d = map(''.join, zip(*[iter(strpattern)]*3))
+
+	# ignore equivalent (in the hematite case) patterns
+	if ''.join((d, c, b, a)) in fullpatternlist:
+		continue
+	if ''.join((b, a, d, c)) in fullpatternlist:
+		continue
+	if ''.join((c, d, a, b)) in fullpatternlist:
+		continue
+
+	ie.feed_pattern(pattern, 1)
+	fullpatternlist.append(strpattern)
+ie.update_cache()
+print 'unique pattern count', len(fullpatternlist)
+lgps = ie.logprobabilities(alpha, beta)
+assert(len(lgps) == len(fullpatternlist))
+
+ordered = sorted(zip(lgps, fullpatternlist), key=lambda x: x[0], reverse=True)[:50]
+print 'best probability', max(lgps)
+for ps, pattern in ordered:
+	print pattern, ps
