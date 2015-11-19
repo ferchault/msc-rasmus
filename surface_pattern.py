@@ -113,8 +113,6 @@ for traj, maxframe in zip('A B'.split(), (4421, 4288)):
 				found_patterns[found] += 1
 
 # 110 100 100 100 sequence pattern for 1426 times
-print found_patterns
-quit()
 #Build neighbour list
 nb_list = np.zeros((12,12))
 
@@ -128,7 +126,6 @@ for j in range(0,3):
 	nb_list[:,j+6] = c + d + a + b
 	nb_list[:,j+9] = d + c + b + a
 
-#
 #Read the hb database
 hb_data_file = open(data_directory + "filled_hb_db.out")
 first = True
@@ -221,29 +218,26 @@ write_line_to_file(a_file, ["seq" , "row", "in plane", "out plane"])
 write_line_to_file(d_out_file, ["seq" , "row", "count"])
 write_line_to_file(d_file, ["seq" , "row", "nb1", "nb2" , "nb3", "nb4", "nb5", "nb6"])
 
-
 for key in acceptor_matrix:
 	total_acceptor_matrix[key] = reduce(lambda x, y: x+y, acceptor_matrix[key].itervalues())/found_patterns[key]
-	for key in total_acceptor_matrix:
-		for row_num in xrange(0, 12):
-			write_line_to_file(a_file, [key, row_num, total_acceptor_matrix[key][row_num][0], total_acceptor_matrix[key][row_num][1]])
+	for row_num in xrange(0, 12):
+		write_line_to_file(a_file, [key, row_num, total_acceptor_matrix[key][row_num][0], total_acceptor_matrix[key][row_num][1]])
 
 total_donor_out_matrix = dict()
 for key in donor_out_matrix:
 	total_donor_out_matrix[key] = reduce(lambda x, y: x+y, donor_out_matrix[key].itervalues())/found_patterns[key]
-	for key in total_donor_out_matrix:
-		for row_num in xrange(0, 12):
-			row = total_donor_out_matrix[key][row_num]
-			write_line_to_file(d_out_file, [key, row_num, row[0]])
+	for row_num in xrange(0, 12):
+		row = total_donor_out_matrix[key][row_num]
+		write_line_to_file(d_out_file, [key, row_num, row[0]])
 
 
 total_donor_matrix = dict()
 for key in donor_matrix:
 	total_donor_matrix[key] = reduce(lambda x, y: x+y, donor_matrix[key].itervalues())/found_patterns[key]
-	for key in total_donor_matrix:
-		for row_num in xrange(0, 12):
-			row = total_donor_matrix[key][row_num]
-			write_line_to_file(d_file, [key, row_num, row[0], row[1], row[2], row[3], row[4], row[5]])
+	for row_num in xrange(0, 12):
+		row = total_donor_matrix[key][row_num]
+		write_line_to_file(d_file, [key, row_num, row[0], row[1], row[2], row[3], row[4], row[5]])
+
 
 print time.time() - start
 
