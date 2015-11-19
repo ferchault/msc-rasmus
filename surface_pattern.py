@@ -45,6 +45,7 @@ for line in open(hinterface_file):
 oxygen_idx_top = ((80, 74, 77), (146, 140, 143), (47, 41, 44), (113, 107, 110))
 oxygen_idx_bot = ((59, 57, 58), (125, 123, 124), (26, 24, 25), (92, 90, 91))
 
+
 lookup = dict(((92,8), (26,2), (93,9), (91,7), (27,3), (125,11), (25,1), (59,5), (126,12), (124,10), (58,4), (60,6), (81,18), (111,20), (45,14), (48,15), (42,13),
 			   (114,21), (108,19), (78,17), (75,16), (147,24), (144,23), (141,22)))
 hydrogen_idx_top = [[lookup[_+1]-1 for _ in x] for x in oxygen_idx_top]
@@ -58,12 +59,18 @@ threshold = .5
 
 found_patterns = dict()
 
+def permute_turple(turple, permutation):
+	permutation = [x-1 for x in permutation ]
+
+	new_turple = [turple[x] for x in permutation]
+	return new_turple
+
 def build_key(a, b, c, d):
 	res = ''
 	for _ in (a, b, c, d):
 		res += reduce(lambda x, y: x+y, map(str, _))
 	return res
-
+#4421, 4288
 sequence_array = []
 for traj, maxframe in zip('A B'.split(), (4421, 4288)):
 	for surface in 't b'.split():
@@ -79,24 +86,35 @@ for traj, maxframe in zip('A B'.split(), (4421, 4288)):
 			key3 = build_key(b, a, d, c)
 			key4 = build_key(c, d, a, b)
 			found = None
+			oxylist = ()
+			if surface == 't':
+				oxylist= oxygen_idx_top
+			elif surface == 'b':
+				oxylist= oxygen_idx_bot
 			for x in (key1, key2, key3, key4):
 				if x in found_patterns:
 					found = x
-					oxylist = ()
-					if surface == 't':
-						oxylist= sum(oxygen_idx_top, ())
-					elif surface == 'b':
-						oxylist= sum(oxygen_idx_bot, ())
 
-					sequence_array.append((traj, frame, surface, str(key1), oxylist))
+					if found == key2:
+						oxylist = permute_turple(oxylist, [4, 3 , 2 ,1])
+					elif found == key3:
+						oxylist = permute_turple(oxylist, [2, 1 , 4 ,3])
+					elif found == key4:
+						oxylist = permute_turple(oxylist, [3, 4 , 1 ,2])
+					#flatten turple
+					oxylist = sum(oxylist, ())
+					sequence_array.append((traj, frame, surface, str(found), oxylist))
 					break
 			if found is None:
 				found_patterns[key1] = 1
+				oxylist = sum(oxylist, ())
+				sequence_array.append((traj, frame, surface, str(key1), oxylist))
 			else:
 				found_patterns[found] += 1
 
 # 110 100 100 100 sequence pattern for 1426 times
-
+print found_patterns
+quit()
 #Build neighbour list
 nb_list = np.zeros((12,12))
 
@@ -174,10 +192,10 @@ for x in sequence_array:
 			for acceptor in acceptors:
 				#acceptor being donated to onto interface
 				if acceptor == id and donor not in id_list:
-					acceptor_matrix[key][frame][i][0] += 1
+					acceptor_matrix[key][frame][i][1] += 1
 				#Acceptor being donated to from interface
 				elif acceptor == id and donor in id_list:
-					acceptor_matrix[key][frame][i][1] += 1
+					acceptor_matrix[key][frame][i][0] += 1
 
 				if donor == id and acceptor not in id_list:
 					donor_out_matrix[key][frame][i][0] += 1
@@ -188,7 +206,44 @@ for x in sequence_array:
 						if masked[nb_index] == acceptor:
 							donor_matrix[key][frame][i][nb_index] += 1
 
-print found_patterns
-print donor_out_matrix['110100100100']
+def write_line_to_file(data_file, line_data_list):
+	for i in line_data_list:
+		data_file.write(str(i))
+		data_file.write(' ')
+	data_file.write('\n')
+
+a_file = open(data_directory + "a_mat.out", 'w')
+d_file = open(data_directory + "d_mat.out", 'w')
+d_out_file = open(data_directory + "d_out_mat.out", 'w')
+
+total_acceptor_matrix = dict()
+write_line_to_file(a_file, ["seq" , "row", "in plane", "out plane"])
+write_line_to_file(d_out_file, ["seq" , "row", "count"])
+write_line_to_file(d_file, ["seq" , "row", "nb1", "nb2" , "nb3", "nb4", "nb5", "nb6"])
+
+
+for key in acceptor_matrix:
+	total_acceptor_matrix[key] = reduce(lambda x, y: x+y, acceptor_matrix[key].itervalues())/found_patterns[key]
+	for key in total_acceptor_matrix:
+		for row_num in xrange(0, 12):
+			write_line_to_file(a_file, [key, row_num, total_acceptor_matrix[key][row_num][0], total_acceptor_matrix[key][row_num][1]])
+
+total_donor_out_matrix = dict()
+for key in donor_out_matrix:
+	total_donor_out_matrix[key] = reduce(lambda x, y: x+y, donor_out_matrix[key].itervalues())/found_patterns[key]
+	for key in total_donor_out_matrix:
+		for row_num in xrange(0, 12):
+			row = total_donor_out_matrix[key][row_num]
+			write_line_to_file(d_out_file, [key, row_num, row[0]])
+
+
+total_donor_matrix = dict()
+for key in donor_matrix:
+	total_donor_matrix[key] = reduce(lambda x, y: x+y, donor_matrix[key].itervalues())/found_patterns[key]
+	for key in total_donor_matrix:
+		for row_num in xrange(0, 12):
+			row = total_donor_matrix[key][row_num]
+			write_line_to_file(d_file, [key, row_num, row[0], row[1], row[2], row[3], row[4], row[5]])
 
 print time.time() - start
+
