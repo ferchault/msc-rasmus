@@ -21,10 +21,8 @@ trajectory_A_5, bulk_water_A_5 = analysis_obj_A.hbond_bulkwater_analysis_build_s
 trajectory_B_5, bulk_water_B_5 = analysis_obj_A.hbond_bulkwater_analysis_build_structure_bulkwater(data_directory + "bulk_oxygen_5.out", data_directory + "filled_hb_db.out")
 
 lifetimes, m, std, avg_hb = analysis_obj_A.hbond_bulkwater_analysis_population(trajectory_A_5, bulk_water_A_5, 60)
-print m
 
 lifetimes, m, std, avg_hb = analysis_obj_B.hbond_bulkwater_analysis_population(trajectory_B_5, bulk_water_B_5, 60)
-print m
 # fig = plt.figure("fig2-A-5")
 # # fighb = plt.figure("fighb-B-7")
 #

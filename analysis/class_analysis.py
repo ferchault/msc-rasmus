@@ -373,6 +373,12 @@ class Analysis:
         lifetimes = np.array(lifetimes)
         mean = np.mean(lifetimes)*0.5
         std = np.std(lifetimes)*0.5
+        print "median", np.median(lifetimes)*0.5
+        print "average" , mean
+        print "max" ,np.max(lifetimes)*0.5
+        print "min" ,np.min(lifetimes)*0.5
+        print "25 percentile", np.percentile(lifetimes,25)*0.5
+        print "75 percentile" ,np.percentile(lifetimes,75)*0.5
 
         # avg_hb = float(number_hb) / float(number_bulk)
         avg_hb = float(count) / float(number_oxygen_bulk)
