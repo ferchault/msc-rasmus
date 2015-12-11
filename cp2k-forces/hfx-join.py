@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import pandas as pd
 
-basepath = '/Users/ferchault/tmp/'
-forces = basepath + 'forces.sub.txt'
+basepath = '/home/rasmus/ownCloud/UCL/fourth Year/Project/data/cp2k/monomer_ethelyne/'
+
+forces = basepath + 'tmp_forces.txt'
 elements = basepath + 'elements.txt'
 basis = basepath + 'basis.txt'
 
@@ -28,7 +29,7 @@ for col in 'abcd':
 	m2 = m2.drop('element', 1)
 	m2.rename(columns={'n': (col + 'n'), 'orb_name': (col + 'l')}, inplace=True)
 
-print m2.columns
+m2.to_csv(basepath + "joined-data.csv")
 #m2 = pd.merge(m1, elements, 'left', left_on='batom', right_on='atom')
 #m1 = pd.merge(m2, elements, 'left', left_on='catom', right_on='atom')
 #m2 = pd.merge(m1, elements, 'left', left_on='datom', right_on='atom')
