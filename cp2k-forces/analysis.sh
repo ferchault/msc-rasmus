@@ -1,5 +1,6 @@
 #!/bin/bash
-
+#useage: script is run with ./analysis.sh -b basepath -i inputfilepath
+#where the inputfile is the raw out from CP2K
 OPTIND=1
 
 input_path=""
