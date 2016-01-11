@@ -30,7 +30,7 @@ for line in f:
         elif not first:
             info_string = ",".join(prev)
             for abcd in [0,1,2,3]:
-                force_part = "," + prev[abcd] + str((abcd+1))
+                force_part = "," + prev[abcd]
                 xyz = ""
                 for xyz in [0,1,2]:
                     force_part += "," + force_abcd[abcd][xyz]
