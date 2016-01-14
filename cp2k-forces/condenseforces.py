@@ -21,7 +21,7 @@ force_abcd[3] = dict()
 
 for i in [0,1,2,3]:
     for j in [0,1,2]:
-        force_abcd[i][j]="0"
+        force_abcd[i][j]=""
 
 prev = 0
 for line in f:
@@ -35,16 +35,21 @@ for line in f:
             for abcd in [0,1,2,3]:
                 force_part = "," + prev[abcd]
                 xyz = ""
+                count = 0
                 for xyz in [0,1,2]:
-                    force_part += "," + force_abcd[abcd][xyz]
-                    force_abcd[abcd][xyz] = "0"
+                    force_part += "," + '%.f7' % round(force_abcd[abcd][xyz],7)
+                    if force_abcd[abcd][xyz] == "":
+                        count = count + 1
+                    force_abcd[abcd][xyz] = ""
                 line_out = info_string + force_part + "\n"
-                out.write(line_out)
+                if count != 3:
+                    out.write(line_out)
     coord = line_parts[13]
     force = line_parts[14]
     cart_coord = coord_to_xyz(coord)
     atom_abcd = (int(coord)-1) / 3
-    force_abcd[atom_abcd][cart_coord] = str(int(round(log(float(force),10))))
+    #force_abcd[atom_abcd][cart_coord] = str(int(round(log(float(force),10))))
+    force_abcd[atom_abcd][cart_coord] = float(force)
     prev = cur
 
 
