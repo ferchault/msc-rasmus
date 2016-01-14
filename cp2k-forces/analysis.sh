@@ -18,6 +18,6 @@ done
 grep "forces " $base_path$input_path  | cut -d ' ' -f2- | sort > $base_path$input_path".temp"
 
 python condenseforces.py $base_path$input_path".temp" $base_path$input_path".final"
-zip $base_path$input_path".zip" $base_path$input_path".final"
-rm $base_path$input_path".final" 
+#zip $base_path$input_path".zip" $base_path$input_path".final"
+#rm $base_path$input_path".final" 
 rm $base_path$input_path".temp"
