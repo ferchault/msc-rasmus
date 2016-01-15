@@ -37,7 +37,11 @@ for line in f:
                 xyz = ""
                 count = 0
                 for xyz in [0,1,2]:
-                    force_part += "," + '%.f7' % round(force_abcd[abcd][xyz],7)
+                    try:
+                        force_part += "," + force_abcd[abcd][xyz]
+                    except:
+                        force_part += "," + ""
+
                     if force_abcd[abcd][xyz] == "":
                         count = count + 1
                     force_abcd[abcd][xyz] = ""
@@ -49,7 +53,7 @@ for line in f:
     cart_coord = coord_to_xyz(coord)
     atom_abcd = (int(coord)-1) / 3
     #force_abcd[atom_abcd][cart_coord] = str(int(round(log(float(force),10))))
-    force_abcd[atom_abcd][cart_coord] = float(force)
+    force_abcd[atom_abcd][cart_coord] = force
     prev = cur
 
 
@@ -57,7 +61,12 @@ info_string = ",".join(prev)
 for abcd in [0,1,2,3]:
     force_part = "," + prev[abcd]
     xyz = ""
+    count = 0 
     for xyz in [0,1,2]:
+        if force_abcd[abcd][xyz] == "":
+            count = count + 1
         force_part += "," + force_abcd[abcd][xyz]
     line_out = info_string + force_part + "\n"
-    out.write(line_out)
+    if count != 3:
+        out.write(line_out)
+
