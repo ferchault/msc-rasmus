@@ -69,4 +69,3 @@ for abcd in [0,1,2,3]:
     line_out = info_string + force_part + "\n"
     if count != 3:
         out.write(line_out)
-
