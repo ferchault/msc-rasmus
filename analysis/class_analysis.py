@@ -11,6 +11,7 @@ class Analysis:
         self.max_oo_dist = 0.0
         self.min_oho_angle = 0.0
         self.max_oh_dist = 0.0
+        self.max_plane_dist = 9999999.0
         self.hmat = np.zeros((3, 3))
         self.hinv = np.zeros((3, 3))
         self.s_coords = np.zeros((len(self.u.atoms), 3))
@@ -197,7 +198,7 @@ class Analysis:
         for patom in point_atoms:
             plane_to_point = patom.position - center
             plane_to_point_dist = np.dot(normal, plane_to_point)
-            if plane_to_point_dist >= self.min_plane_dist:
+            if plane_to_point_dist >= self.min_plane_dist and plane_to_point_dist <= self.max_plane_dist:
                 self.write_line_to_file(output_file, [self.trajectory_name, self.u.trajectory.frame,
                                                       plane, patom.index, plane_to_point_dist])
 
@@ -211,6 +212,9 @@ class Analysis:
 
     def set_min_plane_dist(self, min_plane_dist):
         self.min_plane_dist = min_plane_dist
+
+    def set_max_plane_dist(self, maxi):
+        self.max_plane_dist = maxi
 
     def hbond_bulkwater_analysis_build_structure_bulkwater(self, bulk_water_path, hbond_path):
         bulk_oxygen_file = open(bulk_water_path, 'r')
