@@ -1,6 +1,6 @@
 __author__ = 'rasmus'
 import numpy as np
-base_path = '/home/rasmus/ownCloud/data/oxygenterm-tray/'
+base_path = '/home/rasmus/ownCloud/data/iron-term-trajectory/'
 
 nbins = 499
 oxygen = open(base_path + 'oxygen_int_dist.out', 'r')

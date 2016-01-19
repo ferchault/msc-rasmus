@@ -154,13 +154,18 @@ class Analysis:
         data_file.write('\n')
 
     def get_water_oxygen(self, water_id_list):
-        water = self.u.atoms[water_id_list]
-        water = water.select_atoms("type OW")
+        water2 = self.u.atoms[water_id_list]
+        water = water2.select_atoms("type OW")
+
+        if not water.indices:
+            water = water2.select_atoms("type O")
         return [int(i) for i in water.indices]
 
     def get_water_hydrogen(self, water_id_list):
-        water = self.u.atoms[water_id_list]
-        water = water.select_atoms("type HW")
+        water2 = self.u.atoms[water_id_list]
+        water = water2.select_atoms("type HW")
+        if not water.indices:
+            water = water2.select_atoms("type H")
         return [int(i) for i in water.indices]
 
 
