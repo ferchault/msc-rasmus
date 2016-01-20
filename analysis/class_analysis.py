@@ -459,4 +459,28 @@ class Analysis:
 
                     self.write_line_to_file(output_file, [self.trajectory_name, frame, donor, acceptor, hydrogen, dh_dist, ah_dist, ad_dist , ahd_angle])
         output_file.close()
-    #
+
+    # cretes a list of cloest neighbour for each atom in list 1 to neighbours in list 2
+    def create_nearest_atom_list(self, atoms1, atoms2, interface, start, end, outpath, append=False):
+        if append:
+            output_file = open(outpath, 'a')
+        else:
+            output_file = open(outpath, 'w')
+            self.write_line_to_file(output_file, ['trajectory', 'frame', 'surface', 'h_id', 'h_oxy_nb_id'])
+
+        for frame in self.u.trajectory[start:end]:
+            self.hmat = self.abc_to_hmatrix(*self.u.dimensions)
+            self.hinv = np.linalg.inv(self.hmat)
+            self.calc_si_all(self.hinv)
+            for atom1_id in atoms1:
+                nb_id = self.get_nearest_neighbour(atom1_id , atoms2)
+                self.write_line_to_file(output_file, [self.trajectory_name, self.u.trajectory.frame, interface, atom1_id, nb_id])
+
+    def get_nearest_neighbour(self, atom, atoms2):
+        min_dist = 100000
+        for nb in atoms2:
+            dist = self.calc_dist(atom, nb)
+            if dist < min_dist:
+                min_dist_id = nb
+                min_dist = dist
+        return min_dist_id
