@@ -10,7 +10,7 @@ class Analysis:
         self.ndx = self.ndx_file_read_to_list(ndx_path)
         self.max_oo_dist = 0.0
         self.min_oho_angle = 0.0
-        self.max_oh_dist = 0.0
+        self.max_oh_dist = 1.05
         self.max_plane_dist = 9999999.0
         self.hmat = np.zeros((3, 3))
         self.hinv = np.zeros((3, 3))
@@ -18,11 +18,6 @@ class Analysis:
         self.output_file = ''
         self.trajectory_name = trajectory_name
         self.min_plane_dist = -10000.0
-
-    def set_parameters(self, max_oo_dist, max_oh_dist, min_oho_angle):
-        self.max_oh_dist = max_oh_dist
-        self.max_oo_dist = max_oo_dist
-        self.min_oho_angle = min_oho_angle
 
     def set_parameters(self, max_oo_dist, min_oho_angle):
         self.max_oo_dist = max_oo_dist
@@ -464,3 +459,4 @@ class Analysis:
 
                     self.write_line_to_file(output_file, [self.trajectory_name, frame, donor, acceptor, hydrogen, dh_dist, ah_dist, ad_dist , ahd_angle])
         output_file.close()
+    #
