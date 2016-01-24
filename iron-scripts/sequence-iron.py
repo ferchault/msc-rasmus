@@ -59,15 +59,18 @@ def build_key(a, b, c, d):
 oxygen_idx_top = ((76,70,73),(138,132,135),(45,39,42),(107,101,104))
 oxygen_idx_bot = ((57,55,56),(119,117,118),(26,24,25),(88,86,87))
 found_patterns = dict()
+sequence_array = []
 
 for traj, maxframe in zip('A B'.split(), (4570, 1904)):
     for surface in 't b'.split():
-        if surface=='t':
-            flat_oxy_list = sum(oxygen_idx_top,())
-        elif surface=='b':
-            flat_oxy_list = sum(oxygen_idx_bot,())
         for frame in range(300,maxframe):
             sequence = ""
+            if surface == 't':
+                oxy_list = oxygen_idx_top
+                flat_oxy_list = sum(oxy_list,())
+            elif surface == 'b':
+                oxy_list = oxygen_idx_bot
+                flat_oxy_list = sum(oxy_list,())
             for oxy_id in flat_oxy_list:
                 if oxy_id in hinterface[traj][surface][frame]:
                     if len(hinterface[traj][surface][frame][oxy_id]) == 1:
@@ -94,13 +97,34 @@ for traj, maxframe in zip('A B'.split(), (4570, 1904)):
             for x in (key1,key2,key3,key4):
                 if x in found_patterns:
                     found = x
+                    if found == key2:
+                        oxy_list = permute_turple(oxy_list, [2, 1 , 4 ,3])
+                    elif found == key3:
+                        oxy_list = permute_turple(oxy_list, [3, 4 , 1 ,2])
+                    elif found == key4:
+                        oxy_list = permute_turple(oxy_list, [4, 3 , 2 ,1])
 
+                    oxy_list = sum(oxy_list,())
+                    sequence_array.append((traj,frame,surface,str(found),oxy_list))
+                    break
             if found is None:
                 found_patterns[key1] = 1
+                oxy_list = sum(oxy_list,())
+                sequence_array.append((traj,frame,surface, str(key1), oxy_list))
             else:
                 found_patterns[found] += 1
 
-print found_patterns
 
-print sorted(found_patterns.items(), key=operator.itemgetter(1))
+nb_list = np.zeros((12,12))
 
+nb_list[:,0] = [0 , 1, 1 , 0 , 1 , 1 , 0 ,0 ,1 ,0 ,1 , 0]
+nb_list[:,1] = [1 , 0, 1 , 1 , 0 , 0 , 0 ,0 ,1 ,1 ,0 , 1]
+nb_list[:,2] = [1 , 1, 0 , 1 , 0 , 0 , 1 ,1 ,0 ,0 ,1 , 0]
+
+for j in range(0,3):
+    a, b ,c ,d = [list(nb_list[i:i+3,j]) for i in xrange(0, len(nb_list), 3)]
+    nb_list[:,j+3] = b + a + d + c
+    nb_list[:,j+6] = c + d + a + b
+    nb_list[:,j+9] = d + c + b + a
+
+print nb_list
