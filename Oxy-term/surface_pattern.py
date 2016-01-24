@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 import numpy as np
 import numpy.ma as ma
+import operator
 
 import time
 
 start = time.time()
-data_directory = "/home/rasmus/Dropbox/Education/UCL/fourth Year/Project/data/"
+data_directory = "C:\Users\Rasmus\ownCloud\data\hbond_surface_analysis/"
+# data_directory = "/home/rasmus/Dropbox/Education/UCL/fourth Year/Project/data/"
 
 # read hinterface files
 hinterface_file = data_directory + "hplanedist.out"
