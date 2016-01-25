@@ -237,3 +237,9 @@ for key in donor_matrix:
     for row_num in xrange(0, 12):
         row = total_donor_matrix[key][row_num]
         write_line_to_file(d_file, [key, row_num, row[0], row[1], row[2], row[3], row[4], row[5]])
+
+# prints sequence array to file
+sequence_file = open(base_path + "sequence.out" , 'w')
+for lineparts in sequence_array:
+
+    write_line_to_file(sequence_file, [lineparts[0],lineparts[2],lineparts[1],lineparts[3]])
