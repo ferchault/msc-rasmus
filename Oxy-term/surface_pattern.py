@@ -204,13 +204,19 @@ for x in sequence_array:
 						if masked[nb_index] == acceptor:
 							donor_matrix[key][frame][i][nb_index] += 1
 
-exit()
+
 def write_line_to_file(data_file, line_data_list):
 	for i in line_data_list:
 		data_file.write(str(i))
 		data_file.write(' ')
 	data_file.write('\n')
 
+sequence_file = open(data_directory + "sequence.out" , 'w')
+for lineparts in sequence_array:
+
+    write_line_to_file(sequence_file, [lineparts[0],lineparts[2],lineparts[1],lineparts[3]])
+
+exit()
 a_file = open(data_directory + "a_mat.out", 'w')
 d_file = open(data_directory + "d_mat.out", 'w')
 d_out_file = open(data_directory + "d_out_mat.out", 'w')
