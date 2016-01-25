@@ -152,14 +152,14 @@ class Analysis:
         water2 = self.u.atoms[water_id_list]
         water = water2.select_atoms("type OW")
 
-        if not water.indices:
+        if not list(water.indices):
             water = water2.select_atoms("type O")
         return [int(i) for i in water.indices]
 
     def get_water_hydrogen(self, water_id_list):
         water2 = self.u.atoms[water_id_list]
         water = water2.select_atoms("type HW")
-        if not water.indices:
+        if not list(water.indices):
             water = water2.select_atoms("type H")
         return [int(i) for i in water.indices]
 
