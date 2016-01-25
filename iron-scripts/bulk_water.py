@@ -13,10 +13,10 @@ water_id_list = analysis_obj_A.return_id_list_from_name("water")
 oxygen_water_list_A = []
 oxygen_water_list_A += analysis_obj_A.get_water_oxygen(water_id_list)
 
-analysis_obj_A.set_min_plane_dist(9.5)
-analysis_obj_B.set_min_plane_dist(9.5)
+analysis_obj_A.set_min_plane_dist(9.1)
+analysis_obj_B.set_min_plane_dist(9.1)
 
 analysis_obj_A.start_interface_h_analysis(oxygen_list_A, oxygen_water_list_A, "t", 300, analysis_obj_A.u.trajectory.n_frames, base_path + "bulk_oxygen_7.out")
-analysis_obj_B.start_interface_h_analysis(oxygen_list_A, oxygen_water_list_A, "t", 300, analysis_obj_A.u.trajectory.n_frames, base_path + "bulk_oxygen_7.out", True)
+analysis_obj_B.start_interface_h_analysis(oxygen_list_A, oxygen_water_list_A, "t", 300, analysis_obj_B.u.trajectory.n_frames, base_path + "bulk_oxygen_7.out", True)
 analysis_obj_A.start_interface_h_analysis(oxygen_list_G, oxygen_water_list_A, "b", 300, analysis_obj_A.u.trajectory.n_frames, base_path + "bulk_oxygen_7.out", True)
-analysis_obj_B.start_interface_h_analysis(oxygen_list_G, oxygen_water_list_A, "b", 300, analysis_obj_A.u.trajectory.n_frames, base_path + "bulk_oxygen_7.out", True)
+analysis_obj_B.start_interface_h_analysis(oxygen_list_G, oxygen_water_list_A, "b", 300, analysis_obj_B.u.trajectory.n_frames, base_path + "bulk_oxygen_7.out", True)

@@ -2,7 +2,7 @@
 __author__ = 'rasmus'
 from analysis.class_analysis import *
 
-data_directory = "/home/rasmus/Dropbox/Education/UCL/fourth Year/Project/data/"
+data_directory = "/home/rasmus/ownCloud/data/trajectory/"
 analysis_obj_A = Analysis(data_directory +'input.psf', data_directory +'IOHMD-A-prod.dcd', data_directory +'input.ndx', 'A')
 analysis_obj_B = Analysis(data_directory +'input.psf', data_directory +'IOHMD-B-prod.dcd', data_directory +'input.ndx', 'B')
 
@@ -19,14 +19,14 @@ analysis_obj_B.set_min_plane_dist(5.0)
 
 
 analysis_obj_A.start_interface_h_analysis(oxygen_list_A, oxygen_water_list_A, "t", 0, analysis_obj_A.u.trajectory.n_frames, "bulk_oxygen_5.out")
-analysis_obj_B.start_interface_h_analysis(oxygen_list_A, oxygen_water_list_A, "t", 0, analysis_obj_A.u.trajectory.n_frames, "bulk_oxygen_5.out", True)
+analysis_obj_B.start_interface_h_analysis(oxygen_list_A, oxygen_water_list_A, "t", 0, analysis_obj_B.u.trajectory.n_frames, "bulk_oxygen_5.out", True)
 analysis_obj_A.start_interface_h_analysis(oxygen_list_G, oxygen_water_list_A, "b", 0, analysis_obj_A.u.trajectory.n_frames, "bulk_oxygen_5.out", True)
-analysis_obj_B.start_interface_h_analysis(oxygen_list_G, oxygen_water_list_A, "b", 0, analysis_obj_A.u.trajectory.n_frames, "bulk_oxygen_5.out", True)
+analysis_obj_B.start_interface_h_analysis(oxygen_list_G, oxygen_water_list_A, "b", 0, analysis_obj_B.u.trajectory.n_frames, "bulk_oxygen_5.out", True)
 
 analysis_obj_A.set_min_plane_dist(7.0)
 analysis_obj_B.set_min_plane_dist(7.0)
 
 analysis_obj_A.start_interface_h_analysis(oxygen_list_A, oxygen_water_list_A, "t", 0, analysis_obj_A.u.trajectory.n_frames, "bulk_oxygen_7.out")
-analysis_obj_B.start_interface_h_analysis(oxygen_list_A, oxygen_water_list_A, "t", 0, analysis_obj_A.u.trajectory.n_frames, "bulk_oxygen_7.out", True)
+analysis_obj_B.start_interface_h_analysis(oxygen_list_A, oxygen_water_list_A, "t", 0, analysis_obj_B.u.trajectory.n_frames, "bulk_oxygen_7.out", True)
 analysis_obj_A.start_interface_h_analysis(oxygen_list_G, oxygen_water_list_A, "b", 0, analysis_obj_A.u.trajectory.n_frames, "bulk_oxygen_7.out", True)
-analysis_obj_B.start_interface_h_analysis(oxygen_list_G, oxygen_water_list_A, "b", 0, analysis_obj_A.u.trajectory.n_frames, "bulk_oxygen_7.out", True)
+analysis_obj_B.start_interface_h_analysis(oxygen_list_G, oxygen_water_list_A, "b", 0, analysis_obj_B.u.trajectory.n_frames, "bulk_oxygen_7.out", True)
