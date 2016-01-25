@@ -7,8 +7,8 @@ import operator
 #--..-- out plane 1
 #_---- ..-- more than 1 hydrogen
 
-base_path = "C:\Users\Rasmus\ownCloud\data\iron-term-trajectory/"
-#base_path = "/home/rasmus/ownCloud/data/iron-term-trajectory/"
+#base_path = "C:\Users\Rasmus\ownCloud\data\iron-term-trajectory/"
+base_path = "/home/rasmus/ownCloud/data/iron-term-trajectory/"
 
 h_position_file = open(base_path + "h_position.out", 'r')
 first = True
@@ -127,4 +127,113 @@ for j in range(0,3):
     nb_list[:,j+6] = c + d + a + b
     nb_list[:,j+9] = d + c + b + a
 
-print nb_list
+hb_file = open(base_path + "hb_filled_db.out", "r")
+first = True
+hb_db = dict()
+
+for line in hb_file:
+    if first:
+        first = False
+        continue
+    lineparts = line.strip().split()
+    traj = lineparts[0]
+    frame = int(lineparts[1])
+    donor = int(lineparts[2])
+    acceptor = int(lineparts[3])
+    hyd = int(lineparts[4])
+    if traj not in hb_db:
+        hb_db[traj] = dict()
+    if frame not in hb_db[traj]:
+        hb_db[traj][frame] = dict()
+    if donor not in hb_db[traj][frame]:
+        hb_db[traj][frame][donor] = dict()
+    if acceptor not in hb_db[traj][frame][donor]:
+        hb_db[traj][frame][donor][acceptor] = list()
+    hb_db[traj][frame][donor][acceptor].append(hyd)
+
+acceptor_matrix = dict()
+donor_matrix = dict()
+donor_out_matrix = dict()
+
+matrix_a = np.zeros((12,2))
+matrix_d_out = np.zeros((12,1))
+matrix_d_in = np.zeros((12,6))
+
+for x in sequence_array:
+    traj = x[0]
+    frame = x[1]
+    key = x[3]
+    id_list = x[4]
+
+    if key not in donor_matrix:
+        donor_matrix[key] = dict()
+    if frame not in donor_matrix[key]:
+        donor_matrix[key][frame] = np.zeros((12,6))
+
+    if key not in donor_out_matrix:
+        donor_out_matrix[key] = dict()
+    if frame not in donor_out_matrix[key]:
+        donor_out_matrix[key][frame] = np.zeros((12,1))
+
+    if key not in acceptor_matrix:
+        acceptor_matrix[key] = dict()
+    if frame not in acceptor_matrix[key]:
+        acceptor_matrix[key][frame] = np.zeros((12,2))
+
+    for i in xrange(len(id_list)):
+        id = id_list[i]
+        donors = hb_db[traj][frame].keys()
+        for donor in donors:
+            acceptors = hb_db[traj][frame][donor].keys()
+            for acceptor in acceptors:
+                #acceptor being donated to onto interface
+                if acceptor == id and donor not in id_list:
+                    acceptor_matrix[key][frame][i][1] += 1
+                    #Acceptor being donated to from interface
+                elif acceptor == id and donor in id_list:
+                    acceptor_matrix[key][frame][i][0] += 1
+
+                if donor == id and acceptor not in id_list:
+                    donor_out_matrix[key][frame][i][0] += 1
+
+                elif donor == id and acceptor in id_list:
+                    masked = np.ma.array(id_list, mask = nb_list[:,i]-1).compressed()
+                    for nb_index in xrange(len(masked)):
+                        if masked[nb_index] == acceptor:
+                            donor_matrix[key][frame][i][nb_index] += 1
+
+
+def write_line_to_file(data_file, line_data_list):
+    for i in line_data_list:
+        data_file.write(str(i))
+        data_file.write(' ')
+    data_file.write('\n')
+
+a_file = open(base_path + "a_mat.out", 'w')
+d_file = open(base_path + "d_mat.out", 'w')
+d_out_file = open(base_path + "d_out_mat.out", 'w')
+
+total_acceptor_matrix = dict()
+write_line_to_file(a_file, ["seq" , "row", "in plane", "out plane"])
+write_line_to_file(d_out_file, ["seq" , "row", "count"])
+write_line_to_file(d_file, ["seq" , "row", "nb1", "nb2" , "nb3", "nb4", "nb5", "nb6"])
+
+for key in acceptor_matrix:
+    total_acceptor_matrix[key] = reduce(lambda x, y: x+y, acceptor_matrix[key].itervalues())/found_patterns[key]
+    for row_num in xrange(0, 12):
+        write_line_to_file(a_file, [key, row_num, total_acceptor_matrix[key][row_num][0], total_acceptor_matrix[key][row_num][1]])
+
+total_donor_out_matrix = dict()
+for key in donor_out_matrix:
+    total_donor_out_matrix[key] = reduce(lambda x, y: x+y, donor_out_matrix[key].itervalues())/found_patterns[key]
+    for row_num in xrange(0, 12):
+        row = total_donor_out_matrix[key][row_num]
+        write_line_to_file(d_out_file, [key, row_num, row[0]])
+
+
+total_donor_matrix = dict()
+for key in donor_matrix:
+    total_donor_matrix[key] = reduce(lambda x, y: x+y, donor_matrix[key].itervalues())/found_patterns[key]
+    for row_num in xrange(0, 12):
+        row = total_donor_matrix[key][row_num]
+        write_line_to_file(d_file, [key, row_num, row[0], row[1], row[2], row[3], row[4], row[5]])

@@ -6,8 +6,8 @@ import operator
 import time
 
 start = time.time()
-data_directory = "C:\Users\Rasmus\ownCloud\data\hbond_surface_analysis/"
-# data_directory = "/home/rasmus/Dropbox/Education/UCL/fourth Year/Project/data/"
+#data_directory = "C:\Users\Rasmus\ownCloud\data\hbond_surface_analysis/"
+data_directory = "/home/rasmus/ownCloud/data/hbond_surface_analysis/"
 
 # read hinterface files
 hinterface_file = data_directory + "hplanedist.out"
@@ -195,7 +195,6 @@ for x in sequence_array:
 				#Acceptor being donated to from interface
 				elif acceptor == id and donor in id_list:
 					acceptor_matrix[key][frame][i][0] += 1
-
 				if donor == id and acceptor not in id_list:
 					donor_out_matrix[key][frame][i][0] += 1
 
@@ -205,6 +204,7 @@ for x in sequence_array:
 						if masked[nb_index] == acceptor:
 							donor_matrix[key][frame][i][nb_index] += 1
 
+exit()
 def write_line_to_file(data_file, line_data_list):
 	for i in line_data_list:
 		data_file.write(str(i))
