@@ -1,9 +1,6 @@
-# Calculates the average hbond lifetime for Hbonds in plane, from plane to water , water to plane and water
-from datetime import datetime
+__author__ = 'rasmus'
 from analysis.class_analysis import *
-from analysis.class_oxy_struck import *
-import matplotlib.pyplot as plt
-import matplotlib.ticker as plticker
+base_path = "/home/rasmus/ownCloud/data/hbond_surface_analysis/"
 def split_array_by_delta(array, delta):
     steps = array[1:] - array[:-1]
     seperators = np.where(steps > delta)
@@ -68,7 +65,7 @@ def load_hbond_database(hbond_file, full_oxygen_list):
     hb_structure_db = dict()
     hb_structure_db['A'] = dict()
     hb_structure_db['B'] = dict()
-    n_frames = 4421
+    n_frames = 4570
 
     for donor in full_oxygen_list:
         array = []
@@ -93,27 +90,23 @@ def load_hbond_database(hbond_file, full_oxygen_list):
     return hb_structure_db
 
 
-start_time = datetime.now()
+filled_hb_file = open(base_path + "filled_hb_db.out")
+bulk_water_db = open(base_path + "bulk_oxygen_7.out")
 
-##hbond definitions taken into account in database file - min oho angle 160, max oo dist 3.5 AA and delta of 60
-data_directory = "/home/rasmus/ownCloud/data/"
-hbond_file = open(data_directory + "hbond_surface_analysis/filled_hb_db.out", 'r')
+analysis_obj_A = Analysis(base_path + '../trajectory/input.psf', base_path + '../trajectory/IOHMD-A-prod.dcd', base_path + '../trajectory/input.ndx','A')
 
-# loads the analysis object just to get the oxygen lists easily
-analysis_obj_A = Analysis(data_directory + 'trajectory/input.psf', data_directory + 'trajectory/IOHMD-A-prod.dcd', data_directory + 'trajectory/input.ndx',
-                        'A')
-analysis_obj_B = Analysis(data_directory + 'trajectory/input.psf', data_directory + 'trajectory/IOHMD-B-prod.dcd', data_directory + 'trajectory/input.ndx',
-                        'B')
+#the second top layer of oxygen
+layer_top = analysis_obj_A.return_id_list_from_name("oxygen_A")
+layer_bot = analysis_obj_A.return_id_list_from_name("oxygen_G")
 
-interface_oxygen = analysis_obj_A.return_id_list_from_name("oxygen_A")
-interface_oxygen += analysis_obj_A.return_id_list_from_name("oxygen_G")
+interface_oxygen = layer_top + layer_bot
 
 water_id_list = analysis_obj_A.return_id_list_from_name("water")
 water_oxygen = analysis_obj_A.get_water_oxygen(water_id_list)
 
 all_oxygen = interface_oxygen + water_oxygen
 
-hbond_db = load_hbond_database(hbond_file, all_oxygen)
+hbond_db = load_hbond_database(filled_hb_file, all_oxygen)
 
 # calc_avg_lifetime, takes list of donor and acceptor oxygens
 print 'i i'
@@ -126,38 +119,73 @@ print "w w (all)"
 lifetime_data_w_w = calc_avg_lifetime(hbond_db, water_oxygen, water_oxygen)
 
 
-analysis_obj_A.set_parameters(3.5 ,160)
-analysis_obj_B.set_parameters(3.5, 160)
-trajectory_A_5, bulk_water_A_5 = analysis_obj_A.hbond_bulkwater_analysis_build_structure_bulkwater(data_directory + "hbond_surface_analysis/bulk_oxygen_7.out", data_directory + "hbond_surface_analysis/filled_hb_db.out")
-trajectory_B_5, bulk_water_B_5 = analysis_obj_A.hbond_bulkwater_analysis_build_structure_bulkwater(data_directory + "hbond_surface_analysis/bulk_oxygen_7.out", data_directory + "hbond_surface_analysis/filled_hb_db.out")
+def calc_avg_lifetime_bulk(hbond_db_file, bulk_water_db, water_oxygen):
+    bulk_db = dict()
+    first = True
+    for line in bulk_water_db:
+        if first:
+            first = False
+            continue
+        lineparts = line.strip().split()
+        traj = lineparts[0]
+        frame = int(lineparts[1])
+        oxy_id = int(lineparts[3])
+        if traj not in bulk_db:
+            bulk_db[traj] = dict()
+        if frame not in bulk_db[traj]:
+            bulk_db[traj][frame] = list()
+        bulk_db[traj][frame].append(oxy_id)
 
-lifetimes1, m, std, avg_hb = analysis_obj_A.hbond_bulkwater_analysis_population(trajectory_A_5, bulk_water_A_5, 60)
+    avg_lifetime = 0
+    hbond_list = dict()
+    hbond_list['A'] = []
+    hbond_list['B'] = []
 
-lifetimes2, m, std, avg_hb = analysis_obj_B.hbond_bulkwater_analysis_population(trajectory_B_5, bulk_water_B_5, 60)
+    for traj in hbond_db:
+        if traj == 'A':
+            nframes = 4421
+        elif traj == 'B':
+            nframes = 4288
+        for donor in hbond_db[traj]:
+            if donor in water_oxygen:
+                for frame in hbond_db[traj][donor][60: nframes - 60 ]:
+                    if donor in bulk_db[traj][frame.frame]:
+                        if frame.has_hbond:
+                            for hb in frame.Hbonds:
+                                if hb.acceptor in bulk_db[traj][frame.frame]:
+                                    found = False
+                                    for hb_list in hbond_list[traj]:
+                                        if hb == hb_list.hbond:
+                                            hb_list.framelist.append(frame.frame)
+                                            found = True
+                                    if not found:
+                                        hbond_list[traj].append(HbondStrcture(hb, frame.frame))
 
-lifetimes = np.concatenate((lifetimes1, lifetimes2))*0.5
+    unique_hb = []
+    for traj in hbond_list:
+        for hb in hbond_list[traj]:
+            hb.framelist = np.array(hb.framelist)
+            parts = split_array_by_delta(hb.framelist, 1)
+            unique_hb.append(parts)
 
+    lifetimes = []
+    for outer_array in unique_hb:
+        for inner_array in outer_array:
+            lifetimes.append(inner_array[-1] - inner_array[0])
 
-boxes=[]
+    lifetimes.sort()
+    lifetimes = np.array(lifetimes)
 
-boxes.append(lifetime_data_i_i)
-boxes.append(lifetime_data_i_w)
-boxes.append(lifetime_data_w_i)
-boxes.append(lifetime_data_w_w)
-boxes.append(lifetimes)
+    avg_lifetime = np.mean(lifetimes)*0.5
+    median_lifetime = np.median(lifetimes)*0.5
 
-ax =plt.axes()
+    print "median", median_lifetime
+    print "average" , avg_lifetime
+    print "max" ,np.max(lifetimes)*0.5
+    print "min" ,np.min(lifetimes)*0.5
+    print "25 percentile", np.percentile(lifetimes,25)*0.5
+    print "75 percentile" ,np.percentile(lifetimes,75)*0.5
+    return lifetimes*0.5
 
-plt.boxplot(boxes, whis=[0,100], showmeans=True)
-# axe = plt.boxplot(lifetime_data_i_i , whis=[0, 100])
-# plt.boxplot(lifetime_data_i_w , whis=[0, 100], ax=axe)
-# plt.boxplot(lifetime_data_w_i , whis=[0, 100], ax=axe)
-# plt.boxplot(lifetime_data_w_w , whis=[0, 100], ax=axe)
-# plt.boxplot(lifetimes , whis=[0, 100], ax=axe)
-
-loc = plticker.MultipleLocator(base=50.0)
-
-ax.yaxis.set_major_locator(loc)
-ax.set_xticklabels(["i-i", "i-w", "w-i", "w-w all", "w-w bulk 5AA"])
-plt.show()
-print datetime.now() - start_time
+print "w w (bulk)"
+lifetime_data_w_w_bulk = calc_avg_lifetime_bulk(hbond_db, bulk_water_db, water_oxygen)

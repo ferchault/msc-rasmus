@@ -19,7 +19,7 @@ def calc_avg_lifetime(hbond_db, donor_list, acceptor_list):
             nframes = 1904
         for donor in hbond_db[traj]:
             if donor in donor_list:
-                for frame in hbond_db[traj][donor][60: nframes - 60 ]:
+                for frame in hbond_db[traj][donor][360: nframes - 60 ]:
                         if frame.has_hbond:
                             for hb in frame.Hbonds:
                                 if hb.acceptor in acceptor_list:
@@ -119,11 +119,22 @@ print "w w (all)"
 lifetime_data_w_w = calc_avg_lifetime(hbond_db, water_oxygen, water_oxygen)
 
 
-def calc_avg_lifetime_bulk(hbond_db_file, bulk_water_db):
-
-    for line in hbond_db_file:
+def calc_avg_lifetime_bulk(hbond_db_file, bulk_water_db, water_oxygen):
+    bulk_db = dict()
+    first = True
+    for line in bulk_water_db:
+        if first:
+            first = False
+            continue
         lineparts = line.strip().split()
-
+        traj = lineparts[0]
+        frame = int(lineparts[1])
+        oxy_id = int(lineparts[3])
+        if traj not in bulk_db:
+            bulk_db[traj] = dict()
+        if frame not in bulk_db[traj]:
+            bulk_db[traj][frame] = list()
+        bulk_db[traj][frame].append(oxy_id)
 
     avg_lifetime = 0
     hbond_list = dict()
@@ -136,14 +147,14 @@ def calc_avg_lifetime_bulk(hbond_db_file, bulk_water_db):
         elif traj == 'B':
             nframes = 1904
         for donor in hbond_db[traj]:
-            if donor in donor_list:
-                for frame in hbond_db[traj][donor][60: nframes - 60 ]:
+            if donor in water_oxygen:
+                for frame in hbond_db[traj][donor][360: nframes - 60 ]:
+                    if donor in bulk_db[traj][frame.frame]:
                         if frame.has_hbond:
                             for hb in frame.Hbonds:
-                                if hb.acceptor in acceptor_list:
+                                if hb.acceptor in bulk_db[traj][frame.frame]:
                                     found = False
                                     for hb_list in hbond_list[traj]:
-
                                         if hb == hb_list.hbond:
                                             hb_list.framelist.append(frame.frame)
                                             found = True
